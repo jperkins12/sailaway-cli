@@ -40,8 +40,11 @@ class GPSD:
         self.speedkn = speed
         self.hdg = hdg
 
-    def formatCoords(self, coord):
-        formatted = str(int(abs(coord))) + "." + str(int(abs((coord - int(coord)) * 60)))
+    def formatCoords(self, coord, dpad=2):
+        d = str(int(abs(coord))).zfill(dpad)
+        m = str(int(abs((coord - int(coord)) * 60))).zfill(7)
+        
+        formatted = d + m
         return formatted
         
     def prepareJSONData(self):
