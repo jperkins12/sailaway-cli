@@ -42,7 +42,7 @@ class GPSD:
 
     def formatCoords(self, coord, dpad=2):
         d = str(int(abs(coord))).zfill(dpad)
-        m = str(int(abs((coord - int(coord)) * 60))).zfill(7)
+        m = str(abs((coord - int(coord)) * 60)).zfill(7)
         
         formatted = d + m
         return formatted
@@ -86,7 +86,7 @@ class GPSD:
             gll += 'S'
         gll += ','
 
-        gll += self.formatCoords(self.lon) + ","
+        gll += self.formatCoords(self.lon, dpad=3) + ","
         
         if self.lon > 0:
             gll += 'E'
