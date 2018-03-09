@@ -9,15 +9,18 @@ from threading import Thread
 
 def checksum_NMEA(stringa_input):
     # Calcolo del checksum in formato NMEA - attenzione, per semplicità le eccezioni non sono gestite
+    # Calculate the NMEA checksum - Note, for simplicity the exceptions have not been managed
+    
     # trova il primo carattere dopo $
+    # Find the first character after $
     payload_start = stringa_input.find('$') + 1
-    payload_end = stringa_input.find('*')      # trova il carattere *
+    payload_end = stringa_input.find('*')      # trova il carattere * || find the * character
     # dati di cui fare XOR
     payload = stringa_input[payload_start: payload_end]
     ck = 0
-    for ch in payload:      # ciclo di calcolo del checksum
+    for ch in payload:      # ciclo di calcolo del checksum || checksum calculation cycle
         ck = ck ^ ord(ch)   # XOR
-    str_ck = '%02X' % ck    # trasforma il valore calcolato in una stringa di 2 caratteri
+    str_ck = '%02X' % ck    # trasforma il valore calcolato in una stringa di 2 caratteri || transforms the calculated value into a 2 character string
     return(str_ck)
 
 
@@ -37,6 +40,10 @@ class GPSD:
         self.speedkn = speed
         self.hdg = hdg
 
+    def formatCoords(self, coord):
+        formatted = str(int(abs(coord))) + "." + str(int(abs((coord - int(coord)) * 60)))
+        return formatted
+        
     def prepareJSONData(self):
         if not self.lat or not self.lon:
             return None
@@ -68,16 +75,16 @@ class GPSD:
 
         gll = "$GPGLL,"
 
-        gll += str(int(abs(self.lat))) + "." + \
-            str(int(abs((self.lat - int(self.lat)) * 60))) + ","
+        gll += self.formatCoords(self.lat) + ","
+        
         if self.lat > 0:
             gll += 'N'
         else:
             gll += 'S'
         gll += ','
 
-        gll += str(int(abs(self.lon))) + "." + \
-            str(int(abs((self.lon - int(self.lon)) * 60))) + ","
+        gll += self.formatCoords(self.lon) + ","
+        
         if self.lon > 0:
             gll += 'E'
         else:
