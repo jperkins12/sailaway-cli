@@ -1,4 +1,9 @@
-# import argparse
+'''
+Sailaway API CLI
+Run using Python3
+'''
+
+import argparse
 import sys
 
 import api
@@ -10,34 +15,42 @@ def usage():
 
 
 def main():
-    argvn = len(sys.argv)
 
-    print (sys.argv)
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(
+        title='Commands', help='cli functions', dest='command')
 
-    # No args, usage
-    if argvn < 2:
-        usage()
-        sys.exit()
+    parser_login = subparsers.add_parser('login', help='Login to Sailaway')
+    parser_login.add_argument('-u', '--user', help='Sailaway Username')
+    parser_login.add_argument('-w', '--password', help='Sailaway Password')
+
+    parser_list = subparsers.add_parser('list-boats', help='List User Boats')
+
+    parser_gps = subparsers.add_parser('gps-serve', help='Start GPSD Server')
+    parser_gps.add_argument('boatid', help='User Boat ID')
+    parser_gps.add_argument('-p', '--port', type=int,
+                            default=2947, help='GPSD Port, Default: 2947')
+
+    args = parser.parse_args()
 
     # login
-    elif argvn > 1 and sys.argv[1] == 'login':
-        email = None
-        password = None
+    if args.command == 'login':
 
-        if argvn > 2:
-            email = sys.argv[2]
+        if args.user:
+            email = args.user
         else:
-            email = raw_input('Email: ')
-        if argvn > 3:
-            password = sys.argv[3]
+            email = input('Email: ')
+
+        if args.password:
+            password = args.password
         else:
-            password = raw_input('Password: ')
+            password = input('Password: ')
 
         sw = api.Sailaway()
         sw.login(email, password)
 
     # list-boats
-    elif argvn > 1 and sys.argv[1] == 'list-boats':
+    if args.command == 'list-boats':
         sw = api.Sailaway()
         sw.login()
         for boat in sw.getUserBoats()['userboats']:
@@ -47,12 +60,9 @@ def main():
                 print(printstring)
 
     # gps-serve
-    elif argvn > 2 and sys.argv[1] == 'gps-serve':
-        boat = sys.argv[2]
-        port = 2947
-
-        if argvn > 3:
-            port = int(sys.argv[3])
+    if args.command == 'gps-serve':
+        boat = args.boatid
+        port = args.port
 
         sw = api.Sailaway()
         sw.login()

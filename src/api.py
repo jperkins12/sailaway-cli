@@ -23,6 +23,7 @@ class Sailaway:
         f = open('login.auth', 'w')
         f.write(json.dumps({'email': self.email, 'password': self.password}))
         f.close()
+        print('Saved Credentials')
 
     def login(self, email=None, password=None):
         if email is not None and password is not None:

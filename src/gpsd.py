@@ -1,20 +1,22 @@
 # coding=utf-8
 
-import socket
-import time
 import datetime
 import json
+import socket
+import sys
+import time
 from threading import Thread
 
 
 def checksum_NMEA(stringa_input):
     # Calcolo del checksum in formato NMEA - attenzione, per semplicità le eccezioni non sono gestite
     # Calculate the NMEA checksum - Note, for simplicity the exceptions have not been managed
-    
+
     # trova il primo carattere dopo $
     # Find the first character after $
     payload_start = stringa_input.find('$') + 1
-    payload_end = stringa_input.find('*')      # trova il carattere * || find the * character
+    # trova il carattere * || find the * character
+    payload_end = stringa_input.find('*')
     # dati di cui fare XOR
     payload = stringa_input[payload_start: payload_end]
     ck = 0
@@ -42,11 +44,11 @@ class GPSD:
 
     def formatCoords(self, coord, dpad=2):
         d = str(int(abs(coord))).zfill(dpad)
-        m = str(format(abs((coord - int(coord)) * 60),'.4f')).zfill(7)
-        
+        m = str(format(abs((coord - int(coord)) * 60), '.4f')).zfill(7)
+
         formatted = d + m
         return formatted
-        
+
     def prepareJSONData(self):
         if not self.lat or not self.lon:
             return None
@@ -73,13 +75,17 @@ class GPSD:
         if not self.lat or not self.lon:
             return []
 
+        # prep heading nmea message
+        # $GPHDT,hdg,T*(checksum)
         hdt = "$GPHDT," + str(self.hdg) + ",T*"
         hdt += checksum_NMEA(hdt)
 
+        # prep location nmea message
+        # $GPGLL,lat(ddmm.mm),(N/S),lon(dddmm.mm),(E/W),UTC(hhmmss.ss),A*(checksum)
         gll = "$GPGLL,"
 
         gll += self.formatCoords(self.lat) + ","
-        
+
         if self.lat > 0:
             gll += 'N'
         else:
@@ -87,12 +93,13 @@ class GPSD:
         gll += ','
 
         gll += self.formatCoords(self.lon, dpad=3) + ","
-        
+
         if self.lon > 0:
             gll += 'E'
         else:
             gll += 'W'
         gll += ','
+
         gll += datetime.datetime.utcnow().strftime('%H%M%S.%f')[:9] + ',A*'
         gll += checksum_NMEA(gll)
 
@@ -121,7 +128,12 @@ class GPSD:
         while True:
             if self.conf == 'nmea':
                 for p in self.prepareNMEAData():
-                    client.send(p)
+                    try:
+                        client.send(p)
+                    except BrokenPipeError:
+                        # graceful exit on broken pipe
+                        print("Client Disconnected")
+                        sys.exit()
             elif self.conf == 'json':
                 pack = self.prepareJSONData()
                 if pack:
